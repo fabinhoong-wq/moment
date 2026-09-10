@@ -1,0 +1,145 @@
+{
+  "projetos": [],
+  "lancamentos": [],
+  "propostas": [],
+  "packs": [
+    {
+      "id": "build",
+      "nome": "The Build",
+      "cat": "Projeto de carro",
+      "preco": 700,
+      "itens": [
+        "1 vídeo completo de até 5 minutos",
+        "Formato cinema, entrevista ou cobertura",
+        "1 teaser do vídeo completo",
+        "1 Reel para Instagram",
+        "The Underground Box inclusa"
+      ]
+    },
+    {
+      "id": "brand",
+      "nome": "The Brand",
+      "cat": "Empresas e marcas",
+      "preco": 1800,
+      "itens": [
+        "2 dias de captação",
+        "4 vídeos em formato YouTube",
+        "4 Reels para Instagram",
+        "The Underground Box inclusa"
+      ]
+    }
+  ],
+  "avulsos": [
+    {
+      "id": "a1",
+      "nome": "Drone adicional",
+      "preco": 350,
+      "desc": "Sessão extra de drone"
+    },
+    {
+      "id": "a2",
+      "nome": "Vídeo adicional",
+      "preco": 250,
+      "desc": "Vídeo extra no mesmo projeto"
+    },
+    {
+      "id": "a3",
+      "nome": "Edição urgente",
+      "preco": 200,
+      "desc": "Entrega em até 48h"
+    },
+    {
+      "id": "a4",
+      "nome": "Patrocínio / Ativação",
+      "preco": 800,
+      "desc": "Ativação de marca em evento"
+    }
+  ],
+  "metas": {
+    "Jan": 2000,
+    "Fev": 2000,
+    "Mar": 2000,
+    "Abr": 2000,
+    "Mai": 2000,
+    "Jun": 2000,
+    "Jul": 2000,
+    "Ago": 2000,
+    "Set": 2000,
+    "Out": 2000,
+    "Nov": 2000,
+    "Dez": 2000
+  },
+  "custosFixos": [
+    {
+      "id": "cf1",
+      "nome": "Verificado",
+      "valor": 120
+    },
+    {
+      "id": "cf2",
+      "nome": "Apple",
+      "valor": 19.9
+    },
+    {
+      "id": "cf3",
+      "nome": "Claude",
+      "valor": 115
+    }
+  ],
+  "templates": [
+    {
+      "id": "tpl-evento",
+      "nome": "Cobertura de Evento",
+      "tipo": "evento",
+      "desc": "Três níveis de cobertura — padrão para organizadores de evento.",
+      "niveis": [
+        {
+          "nome": "Completo",
+          "preco": 1790,
+          "itens": [
+            "1 vídeo chamada (até 1 min)",
+            "Captação com drone",
+            "2 câmeras cobrindo áreas diferentes",
+            "Cobertura fotográfica",
+            "Vídeo de cobertura completo"
+          ]
+        },
+        {
+          "nome": "Intermediário",
+          "preco": 1390,
+          "itens": [
+            "1 vídeo chamada (até 1 min)",
+            "2 câmeras cobrindo áreas diferentes",
+            "Cobertura fotográfica",
+            "Vídeo de cobertura completo"
+          ]
+        },
+        {
+          "nome": "Essencial",
+          "preco": 1000,
+          "itens": [
+            "1 vídeo chamada (até 1 min)",
+            "1 câmera em campo",
+            "Vídeo de cobertura completo"
+          ]
+        }
+      ]
+    }
+  ],
+  "config": {
+    "bg": "tunel",
+    "accent": "laranja",
+    "veil": 62,
+    "blur": 0,
+    "scan": true,
+    "grid": true,
+    "grain": true,
+    "custom": ""
+  },
+  "clientes": [],
+  "eventos": [],
+  "propNumero": 2,
+  "nextId": 2,
+  "_version": 4,
+  "_savedAt": "2026-09-01T23:31:16.583Z"
+}
