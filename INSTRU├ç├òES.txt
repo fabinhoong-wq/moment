@@ -1,0 +1,92 @@
+╔════════════════════════════════════════════════════════════════════╗
+║           INSTRUÇÕES DE DEPLOYMENT - MOMENT MOTORSPORT            ║
+╚════════════════════════════════════════════════════════════════════╝
+
+📦 PASSO 1: PREPARAR OS ARQUIVOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Extraia este ZIP em uma pasta
+2. Copie seus arquivos (index.html, styles.css, script.js, etc) para esta pasta
+3. Verifique se existe um "index.html" na raiz
+
+✅ Estrutura esperada:
+   momento/
+   ├── index.html
+   ├── styles.css
+   ├── script.js
+   ├── package.json (já incluído)
+   ├── server.js (já incluído)
+   └── ...outros arquivos
+
+
+🔧 PASSO 2: TESTAR LOCALMENTE (OPCIONAL)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Abra o terminal na pasta
+2. Digite: npm install
+3. Digite: npm start
+4. Acesse: http://localhost:3000
+
+Se funcionar localmente, funcionará no Render! ✅
+
+
+📤 PASSO 3: ENVIAR PARA GITHUB
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+No terminal da pasta:
+
+git init
+git add .
+git commit -m "Subindo projeto para deploy no Render"
+git push
+
+⚠️ Se der erro de auth, gere um token: https://github.com/settings/tokens
+
+
+🚀 PASSO 4: DEPLOY NO RENDER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Acesse: https://render.com
+2. Clique em "New" (canto superior direito)
+3. Selecione "Web Service"
+4. Escolha "Deploy an existing Git repository"
+5. Conecte sua conta GitHub
+6. Selecione o repositório "momento"
+7. Configure assim:
+
+   ┌─────────────────────────────┐
+   │ Name: momento               │
+   │ Environment: Node           │
+   │ Build Command: npm install  │
+   │ Start Command: npm start    │
+   │ Instance Type: Free         │
+   └─────────────────────────────┘
+
+8. Clique em "Create Web Service"
+9. Aguarde (leva 2-5 minutos)
+10. Pronto! Seu site estará em: https://momento-xxxxx.onrender.com
+
+
+✨ PRONTO!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Seu site está online! 🎉
+
+- URL: https://momento-xxxxx.onrender.com
+- Para atualizar: faça push pro GitHub e o Render redeploy automaticamente
+- Logs disponíveis no dashboard do Render
+
+
+❓ PROBLEMAS?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Erro comum: "Cannot find module..."
+→ Solução: Verifique se package.json está na raiz
+
+Erro: "Deploy failed"
+→ Solução: Veja os logs no Render → Logs
+
+Site carrega mas tá quebrado
+→ Solução: Verifique se index.html está na raiz
+
+Mais dúvidas? Docs: https://render.com/docs
