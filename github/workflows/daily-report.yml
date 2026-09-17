@@ -19,3 +19,17 @@ jobs:
         run: |
           curl -sf "https://moment-dfs4.onrender.com/send-daily-report?secret=${{ secrets.REPORT_SECRET }}" \
             || (echo "Falhou, tentando de novo em 30s" && sleep 30 && curl -sf "https://moment-dfs4.onrender.com/send-daily-report?secret=${{ secrets.REPORT_SECRET }}")
+adiciona workflow do relatorio
+
+
+
+
+
+
+
+
+
+
+
+
+            
