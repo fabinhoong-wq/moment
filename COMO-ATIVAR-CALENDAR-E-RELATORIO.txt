@@ -1,0 +1,86 @@
+MOMENT · GOOGLE CALENDAR + RELATÓRIO DIÁRIO — COMO ATIVAR
+============================================================
+Isso parte do sistema que já está no ar. Se você ainda não colocou o
+banco Postgres pra funcionar (arquivo COMO-COLOCAR-NO-AR.txt anterior),
+faça isso primeiro — o resto depende do banco já estar de pé.
+
+PARTE 1 — GOOGLE CALENDAR (não precisa de nada novo no Google)
+------------------------------------------------------------
+Isso já funciona assim que você subir os arquivos novos. Não precisa
+criar nada no Google Cloud, não precisa senha de app, nada. É só um
+botão que busca um link.
+
+1. No sistema, vá na aba Agenda
+2. Clique em "Google Calendar"
+3. Siga as instruções que aparecem no próprio modal (pegar o link
+   iCal no Google Calendar: 3 pontos → Configurações e
+   compartilhamento → Endereço secreto no formato iCal)
+4. Cole o link, escolha a partir de qual data importar, clique em
+   "Importar eventos"
+
+Isso importa uma vez, quando você clica. Não fica sincronizando
+sozinho. Se adicionar evento novo no Google Calendar, você volta
+nessa tela e clica em Importar de novo — ele não traz duplicata,
+porque compara título e data antes de adicionar.
+
+PARTE 2 — RELATÓRIO DIÁRIO POR E-MAIL (esse tem setup)
+------------------------------------------------------------
+Mesmo esquema do AV Manager: senha de app do Gmail + um gatilho
+externo que acorda o sistema às 18h.
+
+1. Gerar a senha de app do Gmail (se você já tem uma do AV Manager,
+   pode reaproveitar a mesma, não precisa gerar outra):
+   - myaccount.google.com/apppasswords
+   - Gera uma senha de 16 letras, guarda ela
+
+2. No Render, no serviço do Moment (moment-dfs4), vá em Environment
+   e adicione estas variáveis:
+   GMAIL_USER = fabinhoong@gmail.com  (ou o e-mail que envia)
+   GMAIL_APP_PASSWORD = a senha de 16 letras do passo 1
+   REPORT_TO = fabinhoong@gmail.com   (quem recebe o relatório)
+   REPORT_SECRET = invente uma senha longa qualquer, só pra você
+                   saber (ex: um trecho aleatório de letras e números)
+
+3. No GitHub, no repositório fabinhoong-wq/moment:
+   - Vá em Settings → Secrets and variables → Actions
+   - Clique em "New repository secret"
+   - Nome: REPORT_SECRET
+   - Valor: a MESMA senha que você colocou no Render no passo 2
+   (as duas precisam ser idênticas, é isso que garante que só o
+   GitHub Actions consegue disparar o relatório, ninguém mais)
+
+4. Suba os arquivos desta pasta pro GitHub (mesmo jeito de sempre,
+   arrastar e soltar em "Add file → Upload files"):
+   server.js, package.json — substituem os antigos
+   .github/workflows/daily-report.yml — arquivo novo, numa pasta nova
+   (o GitHub Desktop/upload web mantém a estrutura de pastas se você
+   arrastar a pasta .github inteira; se for só arquivo por arquivo,
+   crie o caminho .github/workflows/ na hora de subir)
+
+5. Espere o Render terminar de reimplantar
+
+COMO TESTAR SEM ESPERAR ATÉ 18H
+------------------------------------------------------------
+1. No GitHub, vá na aba "Actions" do repositório
+2. Clique em "Relatorio diario Moment (18h)" na lista à esquerda
+3. Clique em "Run workflow" (botão cinza à direita) → Run workflow
+4. Espera 1-2 minutos, confere seu e-mail
+
+Se não chegar nada, entra no "Run" que apareceu na lista e olha o
+log de cada passo — geralmente o erro é a senha de app errada ou o
+REPORT_SECRET não bater entre Render e GitHub.
+
+O QUE O RELATÓRIO TRAZ
+------------------------------------------------------------
+- Projetos concluídos (etapa "Entregue")
+- Projetos em aberto (todo o resto do pipeline)
+- Propostas em aberto (status "Enviada" ou "Em negociação")
+- Financeiro: entradas e saídas do dia, saldo total acumulado
+- O que está agendado pra amanhã
+
+DEPOIS DE TUDO FUNCIONANDO
+------------------------------------------------------------
+Quando esse relatório estiver chegando certinho todo dia, é só me
+avisar aqui que eu atualizo a tarefa agendada do resumo das 19h pra
+ela também ler esse e-mail novo, do mesmo jeito que já lê o do AV
+Manager e o do Pierre.
