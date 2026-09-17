@@ -1,0 +1,22 @@
+name: Relatorio diario Moment (18h)
+
+on:
+  schedule:
+    # 18:00 horário de Brasília = 21:00 UTC (sem horário de verão no Brasil)
+    - cron: '0 21 * * *'
+  workflow_dispatch: {}   # permite disparar manualmente pra testar
+
+jobs:
+  enviar-relatorio:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Acordar o servico no Render (caso esteja hibernando)
+        run: curl -s -o /dev/null "https://moment-dfs4.onrender.com/" || true
+
+      - name: Esperar o servico responder
+        run: sleep 20
+
+      - name: Chamar a rota do relatorio
+        run: |
+          curl -sf "https://moment-dfs4.onrender.com/send-daily-report?secret=${{ secrets.REPORT_SECRET }}" \
+            || (echo "Falhou, tentando de novo em 30s" && sleep 30 && curl -sf "https://moment-dfs4.onrender.com/send-daily-report?secret=${{ secrets.REPORT_SECRET }}")
