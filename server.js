@@ -251,7 +251,7 @@ function montarRelatorioHtml(dados) {
       ${li(agendaAmanha, (a) => `<li style="color:${C}">${a.hora || ''} — ${a.titulo}</li>`, 'Nada agendado pra amanhã.')}
     </ul>
 
-    <div style="margin-top:26px;padding-top:14px;border-top:1px solid #222;font-size:11px;color:#777">Moment Motorsport · gerado automaticamente às 18h</div>
+    <div style="margin-top:26px;padding-top:14px;border-top:1px solid #222;font-size:11px;color:#777">Moment Motorsport · gerado automaticamente às 20h</div>
   </div>`;
 }
 
@@ -289,22 +289,14 @@ app.get('/send-daily-report', async (req, res) => {
   }
 });
 
-// ---- Página principal ----
-app.get('/', function (req, res) {
-  res.sendFile(__dirname + '/index.html', {}, function (error) {
-    if (error) res.status(500).send('Error');
-  });
-});
-
-// ---- Sobe o servidor ----
-garantirTabelas()
-  .then(() => {
-    app.listen(port, () => {
-      console.log(`Moment rodando na porta ${port}`);
-      console.log(process.env.DATABASE_URL ? 'Banco conectado.' : 'AVISO: sem DATABASE_URL, o /api/state vai falhar.');
-    });
-  })
-  .catch((err) => {
-    console.error('Não consegui preparar as tabelas no banco:', err.message);
-    app.listen(port, () => console.log(`Moment rodando na porta ${port} (SEM banco funcionando)`));
-  });
+// =====================================================================
+// RELATÓRIO MENSAL — mesmo esquema do diário, mas dispara 1x por mês
+// (GitHub Actions, 22h do último dia do mês) e resume o mês inteiro
+// que acabou de terminar, não só o dia.
+//
+// Nota sobre os dados: "projetos concluídos" e "propostas fechadas"
+// usam o campo de data que já existe em cada um (o mesmo que aparece
+// na tabela do sistema). Não é uma data de "quando mudou de etapa"
+// separada — é uma aproximação razoável, mas se um projeto for criado
+// num mês e só marcado como Entregue no mês seguinte, ele conta pelo
+// mês da data cadastrada, não da entrega. Dá pra refinar depois s
