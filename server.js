@@ -39,6 +39,11 @@ if (!process.env.DATABASE_URL) {
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
+  // Sem isso, uma conexão que não responde fica pendurada por vários
+  // minutos até o sistema operacional desistir sozinho — o que torna
+  // qualquer diagnóstico muito lento. Com isso, desiste em 10s e devolve
+  // um erro claro, em vez de ficar girando sem dizer nada.
+  connectionTimeoutMillis: 10000,
 });
 
 async function garantirTabelas() {
