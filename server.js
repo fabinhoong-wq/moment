@@ -200,7 +200,7 @@ function montarRelatorioHtml(dados) {
   const financeiro = dados.financeiro || [];
   const agenda = dados.agenda || [];
 
-  const concluidosHoje = projetos.filter((p) => p.etapa === 'Entregue');
+  const concluidosHoje = projetos.filter((p) => p.etapa === 'Entregue' && (p.dataEntrega || p.data) === hoje);
   const emAberto = projetos.filter((p) => p.etapa !== 'Entregue');
   const propostasAbertas = propostas.filter((p) => p.status === 'Enviada' || p.status === 'Em negociação');
   const lancHoje = financeiro.filter((f) => f.data === hoje);
@@ -224,7 +224,7 @@ function montarRelatorioHtml(dados) {
     <div style="font-size:11px;letter-spacing:.2em;color:#FF6B35;text-transform:uppercase;margin-bottom:4px">Moment · Resumo do dia</div>
     <h1 style="font-size:22px;margin:0 0 20px;color:${C}">${new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}</h1>
 
-    <h3 style="color:#3ddc84;font-size:13px;text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid #222;padding-bottom:6px">Concluídos</h3>
+    <h3 style="color:#3ddc84;font-size:13px;text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid #222;padding-bottom:6px">Concluídos hoje</h3>
     <ul style="padding-left:18px;margin:8px 0 20px;font-size:14px;color:${C}">
       ${li(concluidosHoje, (p) => `<li style="color:${C}">${p.titulo} — ${p.clienteNome || 'sem cliente'}</li>`, 'Nada entregue ainda nesta temporada.')}
     </ul>
@@ -299,4 +299,137 @@ app.get('/send-daily-report', async (req, res) => {
 // na tabela do sistema). Não é uma data de "quando mudou de etapa"
 // separada — é uma aproximação razoável, mas se um projeto for criado
 // num mês e só marcado como Entregue no mês seguinte, ele conta pelo
-// mês da data cadastrada, não da entrega. Dá pra refinar depois s
+// mês da data cadastrada, não da entrega. Dá pra refinar depois se
+// isso incomodar.
+// =====================================================================
+
+function montarRelatorioMensalHtml(dados) {
+  const agora = new Date();
+  // "mês de referência" = o mês que acabou de terminar quando este
+  // relatório roda (sempre o mês anterior ao mês atual do servidor).
+  const ultimoDiaMesAnterior = new Date(agora.getFullYear(), agora.getMonth(), 0);
+  const anoRef = ultimoDiaMesAnterior.getFullYear();
+  const mesRef = ultimoDiaMesAnterior.getMonth(); // 0-indexado
+  const primeiroDia = `${anoRef}-${String(mesRef + 1).padStart(2, '0')}-01`;
+  const ultimoDia = `${anoRef}-${String(mesRef + 1).padStart(2, '0')}-${String(ultimoDiaMesAnterior.getDate()).padStart(2, '0')}`;
+  const nomeMesBruto = ultimoDiaMesAnterior.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  const nomeMes = nomeMesBruto.charAt(0).toUpperCase() + nomeMesBruto.slice(1);
+
+  const noMes = (d) => d && d >= primeiroDia && d <= ultimoDia;
+
+  // Agora que projetos e propostas têm data própria de conclusão
+  // (carimbada quando a etapa/status muda), o mês certo pra contar
+  // cada coisa é diferente:
+  //   - "entregue neste mês"  → usa dataEntrega (quando foi entregue)
+  //   - "criada neste mês"    → usa data (quando foi cadastrada)
+  //   - "resolvida neste mês" → usa dataResolucao (quando virou Aceita/Recusada)
+  // Registros antigos, de antes dessa mudança, não têm dataEntrega/
+  // dataResolucao — nesse caso cai de volta pra data normal, pra não
+  // sumir do relatório.
+  const financeiro = (dados.financeiro || []).filter((f) => noMes(f.data));
+
+  const entregues = (dados.projetos || []).filter(
+    (p) => p.etapa === 'Entregue' && noMes(p.dataEntrega || p.data)
+  );
+  const propostasCriadas = (dados.propostas || []).filter((p) => noMes(p.data));
+  const aceitas = (dados.propostas || []).filter(
+    (p) => p.status === 'Aceita' && noMes(p.dataResolucao || p.data)
+  );
+  const recusadas = (dados.propostas || []).filter(
+    (p) => p.status === 'Recusada' && noMes(p.dataResolucao || p.data)
+  );
+  const resolvidas = aceitas.length + recusadas.length;
+  const conversao = resolvidas ? Math.round((aceitas.length / resolvidas) * 100) : null;
+
+  const entradas = financeiro.filter((f) => f.tipo === 'Entrada').reduce((s, f) => s + (f.valor || 0), 0);
+  const saidas = financeiro.filter((f) => f.tipo === 'Saída').reduce((s, f) => s + (f.valor || 0), 0);
+
+  const C = '#F3F2ED';
+  const li = (items, render, vazio) =>
+    (items.length ? items.map(render).join('') : `<li style="color:#888">${vazio}</li>`);
+
+  return `
+  <div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;background:#0a0a0b;color:${C};padding:28px">
+    <div style="font-size:11px;letter-spacing:.2em;color:#FF6B35;text-transform:uppercase;margin-bottom:4px">Moment · Resumo mensal</div>
+    <h1 style="font-size:22px;margin:0 0 20px;color:${C}">${nomeMes}</h1>
+
+    <h3 style="color:#E0202C;font-size:13px;text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid #222;padding-bottom:6px">Financeiro do mês</h3>
+    <table style="width:100%;font-size:14px;margin:8px 0 20px;border-collapse:collapse;color:${C}">
+      <tr><td style="padding:4px 0;color:#aaa">Entradas</td><td style="text-align:right;color:${C}">${brl(entradas)}</td></tr>
+      <tr><td style="padding:4px 0;color:#aaa">Saídas</td><td style="text-align:right;color:${C}">${brl(saidas)}</td></tr>
+      <tr><td style="padding:6px 0 0;color:#aaa;border-top:1px solid #222">Saldo do mês</td><td style="text-align:right;padding-top:6px;color:${C};border-top:1px solid #222;font-weight:bold">${brl(entradas - saidas)}</td></tr>
+    </table>
+
+    <h3 style="color:#3ddc84;font-size:13px;text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid #222;padding-bottom:6px">Projetos entregues (${entregues.length})</h3>
+    <ul style="padding-left:18px;margin:8px 0 20px;font-size:14px;color:${C}">
+      ${li(entregues, (p) => `<li style="color:${C}">${p.titulo} — ${p.clienteNome || 'sem cliente'}</li>`, 'Nenhum projeto entregue neste mês.')}
+    </ul>
+
+    <h3 style="color:#FF6B35;font-size:13px;text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid #222;padding-bottom:6px">Propostas do mês</h3>
+    <table style="width:100%;font-size:14px;margin:8px 0 6px;border-collapse:collapse;color:${C}">
+      <tr><td style="padding:4px 0;color:#aaa">Criadas neste mês</td><td style="text-align:right;color:${C}">${propostasCriadas.length}</td></tr>
+      <tr><td style="padding:4px 0;color:#aaa">Aceitas (resolvidas neste mês)</td><td style="text-align:right;color:#3ddc84">${aceitas.length}</td></tr>
+      <tr><td style="padding:4px 0;color:#aaa">Recusadas (resolvidas neste mês)</td><td style="text-align:right;color:#E0202C">${recusadas.length}</td></tr>
+    </table>
+    <p style="font-size:12px;color:#888;margin:0 0 20px">${conversao !== null ? `Taxa de conversão: ${conversao}% das propostas resolvidas neste mês` : 'Sem propostas aceitas ou recusadas neste mês pra calcular conversão.'}</p>
+
+    <div style="margin-top:26px;padding-top:14px;border-top:1px solid #222;font-size:11px;color:#777">Moment Motorsport · gerado automaticamente todo início de mês, resumindo o mês anterior</div>
+  </div>`;
+}
+
+app.get('/send-monthly-report', async (req, res) => {
+  try {
+    const secret = req.query.secret || req.headers['x-report-secret'];
+    if (!process.env.REPORT_SECRET || secret !== process.env.REPORT_SECRET) {
+      return res.status(401).json({ erro: 'Não autorizado.' });
+    }
+    if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+      return res.status(500).json({ erro: 'GMAIL_USER/GMAIL_APP_PASSWORD não configurados.' });
+    }
+
+    const r = await pool.query('SELECT dados FROM moment_state WHERE id = 1');
+    const dados = r.rows.length ? r.rows[0].dados : {};
+    const html = montarRelatorioMensalHtml(dados);
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
+    });
+
+    const refMes = new Date(new Date().getFullYear(), new Date().getMonth(), 0)
+      .toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+    await transporter.sendMail({
+      from: `"Moment · Sistema de Gestão" <${process.env.GMAIL_USER}>`,
+      to: process.env.REPORT_TO || process.env.GMAIL_USER,
+      subject: `Moment · Resumo mensal — ${refMes}`,
+      html,
+    });
+
+    console.log('Relatório mensal enviado com sucesso.');
+    res.json({ ok: true, enviado_em: new Date().toISOString() });
+  } catch (err) {
+    console.error('Erro ao enviar relatório mensal:', err.message);
+    res.status(500).json({ erro: 'Falha ao enviar o relatório mensal: ' + err.message });
+  }
+});
+
+// ---- Página principal ----
+app.get('/', function (req, res) {
+  res.sendFile(__dirname + '/index.html', {}, function (error) {
+    if (error) res.status(500).send('Error');
+  });
+});
+
+// ---- Sobe o servidor ----
+garantirTabelas()
+  .then(() => {
+    app.listen(port, () => {
+      console.log(`Moment rodando na porta ${port}`);
+      console.log(process.env.DATABASE_URL ? 'Banco conectado.' : 'AVISO: sem DATABASE_URL, o /api/state vai falhar.');
+    });
+  })
+  .catch((err) => {
+    console.error('Não consegui preparar as tabelas no banco:', err.message);
+    app.listen(port, () => console.log(`Moment rodando na porta ${port} (SEM banco funcionando)`));
+  });
