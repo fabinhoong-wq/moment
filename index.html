@@ -93,6 +93,12 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .badge.b-red{color:var(--accent2);border-color:var(--accent2)}
 .badge.b-gray{color:var(--muted);border-color:var(--muted)}
 .row-actions{display:flex;gap:6px}
+.field-select{background:var(--panel2);border:1px solid var(--line);color:var(--white);font-family:var(--cond);
+  font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:11px;padding:5px 8px;border-radius:2px;
+  cursor:pointer;outline:0}
+.field-select:hover{border-color:rgba(255,255,255,.4)}
+.field-select:focus{border-color:var(--accent)}
+.done-date{display:block;font-size:10.5px;color:var(--muted);margin-top:3px;font-family:var(--body)}
 .icon-btn{width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);
   background:transparent;color:var(--muted);cursor:pointer;border-radius:2px}
 .icon-btn:hover{color:var(--white);border-color:var(--white)}
@@ -171,7 +177,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
   <section class="sec" id="sec-frota">
     <div class="sec-head"><div><h2>Frota / Projetos</h2><p class="sub">Cada carro ou job em produção</p></div>
       <button class="btn btn-accent" data-open="projeto">+ Projeto</button></div>
-    <div class="panel"><table><thead><tr><th>Projeto</th><th>Cliente</th><th>Carro</th><th>Etapa</th><th>Valor</th><th>Data</th><th></th></tr></thead>
+    <div class="panel"><table><thead><tr><th>Projeto</th><th>Cliente</th><th>Carro</th><th>Etapa</th><th>Valor</th><th>Criado em</th><th>Concluído em</th><th></th></tr></thead>
     <tbody id="tblProjetos"></tbody></table><div class="empty" id="emptyProjetos" style="display:none">Nenhum projeto cadastrado</div></div>
   </section>
 
@@ -179,7 +185,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
   <section class="sec" id="sec-propostas">
     <div class="sec-head"><div><h2>Propostas</h2><p class="sub">O que foi mandado pra cliente, aguardando resposta</p></div>
       <button class="btn btn-accent" data-open="proposta">+ Proposta</button></div>
-    <div class="panel"><table><thead><tr><th>Cliente</th><th>Serviço</th><th>Valor</th><th>Status</th><th>Data</th><th></th></tr></thead>
+    <div class="panel"><table><thead><tr><th>Cliente</th><th>Serviço</th><th>Valor</th><th>Status</th><th>Criada em</th><th>Resolvida em</th><th></th></tr></thead>
     <tbody id="tblPropostas"></tbody></table><div class="empty" id="emptyPropostas" style="display:none">Nenhuma proposta cadastrada</div></div>
   </section>
 
@@ -510,13 +516,52 @@ function renderClientes(){
   }).join('');
 }
 
+var ETAPAS = ['Prospecção','Orçamento','Gravação','Edição','Entregue'];
+var STATUS_PROPOSTA = ['Enviada','Em negociação','Aceita','Recusada'];
+
+function etapaSelect(p){
+  var opts = ETAPAS.map(function(e){ return '<option value="'+e+'"'+(e===p.etapa?' selected':'')+'>'+e+'</option>'; }).join('');
+  var cor = {'Prospecção':'#8a8a86','Orçamento':'#FF6B35','Gravação':'#FF6B35','Edição':'#FF6B35','Entregue':'#3ddc84'}[p.etapa]||'#8a8a86';
+  return '<select class="field-select" style="color:'+cor+'" onchange="__mudarEtapa(\''+p.id+'\',this.value)">'+opts+'</select>'+
+    (p.dataEntrega ? '<span class="done-date">'+fmtData(p.dataEntrega)+'</span>' : '');
+}
+function statusSelect(p){
+  var opts = STATUS_PROPOSTA.map(function(s){ return '<option value="'+s+'"'+(s===p.status?' selected':'')+'>'+s+'</option>'; }).join('');
+  var cor = {'Enviada':'#8a8a86','Em negociação':'#FF6B35','Aceita':'#3ddc84','Recusada':'#E0202C'}[p.status]||'#8a8a86';
+  return '<select class="field-select" style="color:'+cor+'" onchange="__mudarStatus(\''+p.id+'\',this.value)">'+opts+'</select>'+
+    (p.dataResolucao ? '<span class="done-date">'+fmtData(p.dataResolucao)+'</span>' : '');
+}
+
+function mudarEtapa(id, novaEtapa){
+  var p = STATE.projetos.find(function(x){return x.id===id;});
+  if(!p) return;
+  var eraEntregue = p.etapa === 'Entregue';
+  var viraEntregue = novaEtapa === 'Entregue';
+  p.etapa = novaEtapa;
+  if(viraEntregue && !eraEntregue){ p.dataEntrega = new Date().toISOString().slice(0,10); }
+  else if(!viraEntregue && eraEntregue){ delete p.dataEntrega; }
+  saveState(); renderAll(); toast('Etapa atualizada.');
+}
+function mudarStatus(id, novoStatus){
+  var p = STATE.propostas.find(function(x){return x.id===id;});
+  if(!p) return;
+  var eraResolvida = p.status==='Aceita' || p.status==='Recusada';
+  var viraResolvida = novoStatus==='Aceita' || novoStatus==='Recusada';
+  p.status = novoStatus;
+  if(viraResolvida){ p.dataResolucao = new Date().toISOString().slice(0,10); }
+  else if(!viraResolvida && eraResolvida){ delete p.dataResolucao; }
+  saveState(); renderAll(); toast('Status atualizado.');
+}
+window.__mudarEtapa = mudarEtapa;
+window.__mudarStatus = mudarStatus;
+
 function renderProjetos(){
   var tb=document.getElementById('tblProjetos'), empty=document.getElementById('emptyProjetos');
   var arr=STATE.projetos;
   empty.style.display=arr.length?'none':'block';
   tb.innerHTML=arr.map(function(p){
-    return '<tr><td>'+p.titulo+'</td><td>'+(p.clienteNome||'-')+'</td><td>'+(p.carro||'-')+'</td><td>'+etapaBadge(p.etapa)+'</td>'+
-      '<td>'+brl(p.valor)+'</td><td>'+fmtData(p.data)+'</td><td class="row-actions">'+delBtn('projetos',p.id)+'</td></tr>';
+    return '<tr><td>'+p.titulo+'</td><td>'+(p.clienteNome||'-')+'</td><td>'+(p.carro||'-')+'</td><td>'+etapaSelect(p)+'</td>'+
+      '<td>'+brl(p.valor)+'</td><td>'+fmtData(p.data)+'</td><td>'+(p.dataEntrega?fmtData(p.dataEntrega):'—')+'</td><td class="row-actions">'+delBtn('projetos',p.id)+'</td></tr>';
   }).join('');
   document.getElementById('kpiPipeline').textContent=arr.filter(function(p){return p.etapa!=='Entregue';}).length;
 
@@ -533,8 +578,8 @@ function renderPropostas(){
   var arr=STATE.propostas;
   empty.style.display=arr.length?'none':'block';
   tb.innerHTML=arr.map(function(p){
-    return '<tr><td>'+p.cliente+'</td><td>'+(p.servico||'-')+'</td><td>'+brl(p.valor)+'</td><td>'+statusBadge(p.status)+'</td>'+
-      '<td>'+fmtData(p.data)+'</td><td class="row-actions">'+delBtn('propostas',p.id)+'</td></tr>';
+    return '<tr><td>'+p.cliente+'</td><td>'+(p.servico||'-')+'</td><td>'+brl(p.valor)+'</td><td>'+statusSelect(p)+'</td>'+
+      '<td>'+fmtData(p.data)+'</td><td>'+(p.dataResolucao?fmtData(p.dataResolucao):'—')+'</td><td class="row-actions">'+delBtn('propostas',p.id)+'</td></tr>';
   }).join('');
 }
 
