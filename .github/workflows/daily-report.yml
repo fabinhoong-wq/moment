@@ -1,9 +1,9 @@
-name: Relatorio diario Moment (18h)
+name: Relatorio diario Moment (20h)
 
 on:
   schedule:
-    # 18:00 horário de Brasília = 21:00 UTC (sem horário de verão no Brasil)
-    - cron: '0 21 * * *'
+    # 20:00 horário de Brasília = 23:00 UTC (sem horário de verão no Brasil)
+    - cron: '0 23 * * *'
   workflow_dispatch: {}   # permite disparar manualmente pra testar
 
 jobs:
